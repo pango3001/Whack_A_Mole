@@ -183,24 +183,13 @@ public class Main extends Application {
         listOfbutts.get(m_infoPane.getMoleSpot()).setVisible(true);
         listOfbutts.get(m_infoPane.getMoleSpot()).setGraphic(new ImageView(mole));
 
-        final double[] speed = {2};
-        Timeline molePop = new Timeline(new KeyFrame(Duration.seconds(2), event -> {
-            System.out.println(m_infoPane.getMoleSpot());
-            listOfbutts.get(m_infoPane.getMoleSpot()).setVisible(false);
-            System.out.println("new mole");
-            m_infoPane.updateMoleSpot( rand.nextInt(100));
 
-            listOfbutts.get(m_infoPane.getMoleSpot()).setVisible(true);
-            listOfbutts.get(m_infoPane.getMoleSpot()).setGraphic(new ImageView(mole));
-            miss++;
-            m_infoPane.updateMiss(miss);
-        }));
 
         EventHandler<MouseEvent> eventHitMole = new EventHandler<>() {
             @Override
             public void handle(MouseEvent e) {
                 System.out.println(m_infoPane.getMoleSpot());
-                //molePop.play();
+                //molePop.play(); // this should reset the timer
                 //molePop.setCycleCount(Timeline.INDEFINITE);
                 listOfbutts.get(m_infoPane.getMoleSpot()).setVisible(true);
                 listOfbutts.get(m_infoPane.getMoleSpot()).setGraphic(new ImageView(hitMole));
@@ -219,6 +208,19 @@ public class Main extends Application {
             }
         };
 
+        final double[] speed = {2};
+        Timeline molePop = new Timeline(new KeyFrame(Duration.seconds(2), event -> {
+            System.out.println(m_infoPane.getMoleSpot());
+            listOfbutts.get(m_infoPane.getMoleSpot()).setVisible(false);
+            System.out.println("new mole");
+            m_infoPane.updateMoleSpot( rand.nextInt(100));
+            listOfbutts.get(m_infoPane.getMoleSpot()).addEventFilter(MouseEvent.MOUSE_CLICKED,eventHitMole);   // this fixes the problem BUT TIMER DOESNT GET RESET because this timiline!!!!
+            listOfbutts.get(m_infoPane.getMoleSpot()).setVisible(true);
+            listOfbutts.get(m_infoPane.getMoleSpot()).setGraphic(new ImageView(mole));
+            miss++;
+            m_infoPane.updateMiss(miss);
+        }));
+
         EventHandler<MouseEvent> eventResetScore = e -> {
             //clears all the hit moles
             for (int i = 0; i < 100; i++) {
@@ -227,9 +229,9 @@ public class Main extends Application {
             //m_infoPane.updateMoleSpot(rand.nextInt(100));  this works but new random mole isnt clickable, i think may also be the reason the timetable moles arent clickable
             listOfbutts.get(m_infoPane.getMoleSpot()).setVisible(true); // sets first mole
             listOfbutts.get(m_infoPane.getMoleSpot()).setGraphic(new ImageView(mole)); //shows first clickable mole
-            score = 0; // resets score
-            m_infoPane.updateScore(score);
-            //molePop.stop();
+            m_infoPane.updateScore(0); // resets score
+            m_infoPane.updateMiss(0); // resets misses
+            molePop.stop();
         };
 
 
