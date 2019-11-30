@@ -47,9 +47,6 @@ public class Main extends Application {
             setCenter(m_reset);
             setRight(m_missedLabel);
 
-            Random rand = new Random();
-            final int[] moleSpot;
-
         }
 
         public void updateScore(int score) {
@@ -60,6 +57,10 @@ public class Main extends Application {
         }
         public void updateMoleSpot(int spot) {
             moleSpot = spot;
+        }
+
+        public int getMoleSpot() {
+            return moleSpot;
         }
     }
 
@@ -178,17 +179,19 @@ public class Main extends Application {
             }
         }
 
-        //final int[] moleSpot = {rand.nextInt(100)};
-        listOfbutts.get(moleSpot[0]).setVisible(true);
-        listOfbutts.get(moleSpot[0]).setGraphic(new ImageView(mole));
+        final int[] moleSpot = {rand.nextInt(100)};
+        listOfbutts.get(m_infoPane.getMoleSpot()).setVisible(true);
+        listOfbutts.get(m_infoPane.getMoleSpot()).setGraphic(new ImageView(mole));
 
         final double[] speed = {2};
         Timeline molePop = new Timeline(new KeyFrame(Duration.seconds(2), event -> {
-            listOfbutts.get(moleSpot[0]).setVisible(false);
+            System.out.println(m_infoPane.getMoleSpot());
+            listOfbutts.get(m_infoPane.getMoleSpot()).setVisible(false);
             System.out.println("new mole");
-            moleSpot[0] = rand.nextInt(100);
-            listOfbutts.get(moleSpot[0]).setVisible(true);
-            listOfbutts.get(moleSpot[0]).setGraphic(new ImageView(mole));
+            m_infoPane.updateMoleSpot( rand.nextInt(100));
+
+            listOfbutts.get(m_infoPane.getMoleSpot()).setVisible(true);
+            listOfbutts.get(m_infoPane.getMoleSpot()).setGraphic(new ImageView(mole));
             miss++;
             m_infoPane.updateMiss(miss);
         }));
@@ -196,16 +199,17 @@ public class Main extends Application {
         EventHandler<MouseEvent> eventHitMole = new EventHandler<>() {
             @Override
             public void handle(MouseEvent e) {
+                System.out.println(m_infoPane.getMoleSpot());
                 //molePop.play();
                 //molePop.setCycleCount(Timeline.INDEFINITE);
-                listOfbutts.get(moleSpot[0]).setVisible(true);
-                listOfbutts.get(moleSpot[0]).setGraphic(new ImageView(hitMole));
+                listOfbutts.get(m_infoPane.getMoleSpot()).setVisible(true);
+                listOfbutts.get(m_infoPane.getMoleSpot()).setGraphic(new ImageView(hitMole));
                 System.out.println("Hit");
-                moleSpot[0] = rand.nextInt(100);
-                listOfbutts.get(moleSpot[0]).setVisible(true);
-                listOfbutts.get(moleSpot[0]).setGraphic(new ImageView(mole));
+                m_infoPane.updateMoleSpot(rand.nextInt(100));
+                listOfbutts.get(m_infoPane.getMoleSpot()).setVisible(true);
+                listOfbutts.get(m_infoPane.getMoleSpot()).setGraphic(new ImageView(mole));
                 // register event for the next button
-                listOfbutts.get(moleSpot[0]).addEventFilter(MouseEvent.MOUSE_CLICKED, this);
+                listOfbutts.get(m_infoPane.getMoleSpot()).addEventFilter(MouseEvent.MOUSE_CLICKED, this);
                 score++;
                 m_infoPane.updateScore(score);
                 if (score > highScore) {
@@ -220,18 +224,19 @@ public class Main extends Application {
             for (int i = 0; i < 100; i++) {
                 listOfbutts.get(i).setVisible(false);
             }
-            //moleSpot[0] = rand.nextInt(100);  this works but new random mole isnt clickable, i think may also be the reason the timetable moles arent clickable
-            listOfbutts.get(moleSpot[0]).setVisible(true); // sets first mole
-            listOfbutts.get(moleSpot[0]).setGraphic(new ImageView(mole)); //shows first clickable mole
+            //m_infoPane.updateMoleSpot(rand.nextInt(100));  this works but new random mole isnt clickable, i think may also be the reason the timetable moles arent clickable
+            listOfbutts.get(m_infoPane.getMoleSpot()).setVisible(true); // sets first mole
+            listOfbutts.get(m_infoPane.getMoleSpot()).setGraphic(new ImageView(mole)); //shows first clickable mole
             score = 0; // resets score
             m_infoPane.updateScore(score);
             //molePop.stop();
         };
 
-        listOfbutts.get(moleSpot[0]).addEventFilter(MouseEvent.MOUSE_CLICKED,eventHitMole);
+
         m_infoPane.m_reset.addEventFilter(MouseEvent.MOUSE_CLICKED,eventResetScore);
         molePop.setCycleCount(Timeline.INDEFINITE);
         molePop.play();
+        listOfbutts.get(m_infoPane.getMoleSpot()).addEventFilter(MouseEvent.MOUSE_CLICKED,eventHitMole);      //THIS LINE(specifically molespot) IS NOT GETTING UPDATED WHEN MOLE MOVES!!!!!!!!!!!!!!
 
         gridPane.setAlignment(Pos.BOTTOM_CENTER);
         return gridPane;
