@@ -1,6 +1,7 @@
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.HPos;
@@ -19,10 +20,10 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import java.util.Arrays;
-import java.util.Random;
-
-import java.util.ArrayList;
+import java.io.*;
+import java.time.*;
+import java.util.Timer;
+import java.util.*;
 
 public class Main extends Application {
 
@@ -30,7 +31,9 @@ public class Main extends Application {
         private Text m_scoreLabel;
         private Text m_missedLabel;
         private Button m_reset;
-        int moleSpot;
+        private int moleSpot;
+        public long startTime = 0;
+        public long stopTime = 0;
 
 
         public InfoPane() {
@@ -86,19 +89,23 @@ public class Main extends Application {
     private HSPane m_HSPane;
 
     @Override // Override the start method in the Application class
-
     public void start(Stage stage) {
+       // read high score file and update highscore(0 if none)
+        m_HSPane = new HSPane();
+        highScore = readHighScore(0);
+        m_HSPane.updateHighScore(highScore);
+
         stage.setMinHeight(820);
         stage.setMinWidth(680);
         stage.setMaxHeight(820);
         stage.setMaxWidth(680);
 
         BorderPane border = new BorderPane();
-        //HSPane HSPane = new HSPane();
+
 
         border.setTop(addTopPane());
         border.setCenter(addGridPane());
-        m_HSPane = new HSPane();
+
         border.setBottom(m_HSPane);
 
         //Creating a scene object
@@ -152,17 +159,17 @@ public class Main extends Application {
     private GridPane addGridPane() {
         Random rand = new Random();
 
-        ArrayList<Button> listOfbutts = new ArrayList<>(100);
+        ArrayList<Button> listOfButts = new ArrayList<>(100);
         GridPane gridPane = new GridPane();
 
         gridPane.setVgap(4);
         gridPane.setHgap(4);
 
         for (int i = 0; i < 100; i++){
-            listOfbutts.add(new Button());
-            listOfbutts.get(i).setId("button-tile");
-            listOfbutts.get(i).setMaxSize(60, 60);
-            listOfbutts.get(i).setMinSize(60, 60);
+            listOfButts.add(new Button());
+            listOfButts.get(i).setId("button-tile");
+            listOfButts.get(i).setMaxSize(60, 60);
+            listOfButts.get(i).setMinSize(60, 60);
         }
 
         Image mole = new Image(getClass().getResourceAsStream("mole.png"));
@@ -171,72 +178,110 @@ public class Main extends Application {
         for (int i = 0; i < 10;) {
             for (int j = 0; j < 10; j++){
                 for (int k = 0; k < 10; k++){
-                    gridPane.add(listOfbutts.get(i),j,k);
-                    listOfbutts.get(i).setVisible(false);
+                    gridPane.add(listOfButts.get(i),j,k);
+                    listOfButts.get(i).setVisible(false);
                     i++;
                 }
             }
         }
 
         //final int[] moleSpot = {rand.nextInt(100)};
-        listOfbutts.get(moleSpot[0]).setVisible(true);
-        listOfbutts.get(moleSpot[0]).setGraphic(new ImageView(mole));
+        listOfButts.get(m_infoPane.moleSpot).setVisible(true);
+        listOfButts.get(m_infoPane.moleSpot).setGraphic(new ImageView(mole));
 
-        final double[] speed = {2};
-        Timeline molePop = new Timeline(new KeyFrame(Duration.seconds(2), event -> {
-            listOfbutts.get(moleSpot[0]).setVisible(false);
-            System.out.println("new mole");
-            moleSpot[0] = rand.nextInt(100);
-            listOfbutts.get(moleSpot[0]).setVisible(true);
-            listOfbutts.get(moleSpot[0]).setGraphic(new ImageView(mole));
-            miss++;
-            m_infoPane.updateMiss(miss);
-        }));
+//        Timeline molePop = new Timeline(new KeyFrame(Duration.seconds(2), event -> {
+//            listOfButts.get(m_infoPane.moleSpot).setVisible(false);
+//            System.out.println("new mole");m_infoPane.moleSpot = rand.nextInt(100);
+//            listOfButts.get(m_infoPane.moleSpot).setVisible(true);
+//            listOfButts.get(m_infoPane.moleSpot).setGraphic(new ImageView(mole));
+//            miss++;
+//            m_infoPane.updateMiss(miss);
+//        }));
+
 
         EventHandler<MouseEvent> eventHitMole = new EventHandler<>() {
             @Override
             public void handle(MouseEvent e) {
-                //molePop.play();
-                //molePop.setCycleCount(Timeline.INDEFINITE);
-                listOfbutts.get(moleSpot[0]).setVisible(true);
-                listOfbutts.get(moleSpot[0]).setGraphic(new ImageView(hitMole));
+                pop(rand, listOfButts, mole, this);
+                m_infoPane.stopTime = System.currentTimeMillis();
+                System.out.println("Elapsed time was " + (m_infoPane.stopTime - m_infoPane.startTime) + " miliseconds.");
+//                molePop.setCycleCount(Timeline.INDEFINITE);
+//                molePop.play();
+                listOfButts.get(m_infoPane.moleSpot).removeEventFilter(MouseEvent.MOUSE_CLICKED, this);
+                listOfButts.get(m_infoPane.moleSpot).setGraphic(new ImageView(hitMole));
                 System.out.println("Hit");
-                moleSpot[0] = rand.nextInt(100);
-                listOfbutts.get(moleSpot[0]).setVisible(true);
-                listOfbutts.get(moleSpot[0]).setGraphic(new ImageView(mole));
+                m_infoPane.moleSpot = rand.nextInt(100);
+                listOfButts.get(m_infoPane.moleSpot).setVisible(true);
+                listOfButts.get(m_infoPane.moleSpot).setGraphic(new ImageView(mole));
                 // register event for the next button
-                listOfbutts.get(moleSpot[0]).addEventFilter(MouseEvent.MOUSE_CLICKED, this);
+                listOfButts.get(m_infoPane.moleSpot).addEventFilter(MouseEvent.MOUSE_CLICKED, this);
                 score++;
                 m_infoPane.updateScore(score);
                 if (score > highScore) {
                     highScore = score;
                     m_HSPane.updateHighScore(score);
+                    try {
+                        writeHighScore(score);
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
                 }
+                m_infoPane.startTime = System.currentTimeMillis();
             }
         };
 
         EventHandler<MouseEvent> eventResetScore = e -> {
             //clears all the hit moles
             for (int i = 0; i < 100; i++) {
-                listOfbutts.get(i).setVisible(false);
+                listOfButts.get(i).setVisible(false);
             }
-            //moleSpot[0] = rand.nextInt(100);  this works but new random mole isnt clickable, i think may also be the reason the timetable moles arent clickable
-            listOfbutts.get(moleSpot[0]).setVisible(true); // sets first mole
-            listOfbutts.get(moleSpot[0]).setGraphic(new ImageView(mole)); //shows first clickable mole
+            //m_infoPane.moleSpot = rand.nextInt(100);  this works but new random mole isnt clickable, i think may also be the reason the timetable moles arent clickable
+            listOfButts.get(m_infoPane.moleSpot).setVisible(true); // sets first mole
+            listOfButts.get(m_infoPane.moleSpot).setGraphic(new ImageView(mole)); //shows first clickable mole
             score = 0; // resets score
             m_infoPane.updateScore(score);
             //molePop.stop();
         };
 
-        listOfbutts.get(moleSpot[0]).addEventFilter(MouseEvent.MOUSE_CLICKED,eventHitMole);
+
+
+        listOfButts.get(m_infoPane.moleSpot).addEventFilter(MouseEvent.MOUSE_CLICKED,eventHitMole);
         m_infoPane.m_reset.addEventFilter(MouseEvent.MOUSE_CLICKED,eventResetScore);
-        molePop.setCycleCount(Timeline.INDEFINITE);
-        molePop.play();
+                //molePop.setCycleCount(Timeline.INDEFINITE);
+               // molePop.play();
+
 
         gridPane.setAlignment(Pos.BOTTOM_CENTER);
         return gridPane;
 
     }
 
-}
+    private void pop(Random rand, ArrayList<Button> listOfButts, Image mole, EventHandler<MouseEvent> eventHitMole) {
+        Timeline molePop = new Timeline(new KeyFrame(Duration.seconds(2), event -> {
+            listOfButts.get(m_infoPane.moleSpot).addEventFilter(MouseEvent.MOUSE_CLICKED,eventHitMole);            listOfButts.get(m_infoPane.moleSpot).setVisible(false);
+            System.out.println("new mole");
+            m_infoPane.moleSpot = rand.nextInt(100);
+            listOfButts.get(m_infoPane.moleSpot).setVisible(true);
+            listOfButts.get(m_infoPane.moleSpot).setGraphic(new ImageView(mole));
+            miss++;
+            m_infoPane.updateMiss(miss);
+        }));
+    }
 
+    public static void writeHighScore(int highScore) throws IOException {
+        try (DataOutputStream dos = new DataOutputStream(new FileOutputStream("highScore.txt"))) {
+            dos.writeInt(highScore);
+        }
+    }
+
+
+    public static int readHighScore(int valueIfNotFound) {
+        if (!new File("highScore.txt").canRead()) return valueIfNotFound;
+        try (DataInputStream dis = new DataInputStream(new FileInputStream("highScore.txt"))) {
+            return dis.readInt();
+        } catch (IOException ignored) {
+            return valueIfNotFound;
+        }
+    }
+
+}
