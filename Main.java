@@ -50,8 +50,6 @@ public class Main extends Application {
             setCenter(m_reset);
             setRight(m_missedLabel);
 
-            Random rand = new Random();
-            final int[] moleSpot;
 
         }
 
@@ -81,6 +79,7 @@ public class Main extends Application {
         }
     }
 
+    boolean clicked = false;
     private int score = 0;
     private int highScore = 0;
     private int miss = 0;
@@ -157,6 +156,7 @@ public class Main extends Application {
     }
 
     private GridPane addGridPane() {
+
         Random rand = new Random();
 
         ArrayList<Button> listOfButts = new ArrayList<>(100);
@@ -189,20 +189,13 @@ public class Main extends Application {
         listOfButts.get(m_infoPane.moleSpot).setGraphic(new ImageView(mole));
 
 
-        Timeline molePop = new Timeline(new KeyFrame(Duration.seconds(2), event -> {
-            //listOfButts.get(m_infoPane.moleSpot).addEventFilter(MouseEvent.MOUSE_CLICKED,eventHitMole);
-            listOfButts.get(m_infoPane.moleSpot).setVisible(false);
-            System.out.println("new mole");m_infoPane.moleSpot = rand.nextInt(100);
-            listOfButts.get(m_infoPane.moleSpot).setVisible(true);
-            listOfButts.get(m_infoPane.moleSpot).setGraphic(new ImageView(mole));
-            miss++;
-            m_infoPane.updateMiss(miss);
-        }));
+
 
         EventHandler<MouseEvent> eventHitMole = new EventHandler<>() {
             @Override
             public void handle(MouseEvent e) {
-                molePop.stop();
+                clicked = true;
+                //molePop.stop();
 //                pop(rand, listOfButts, mole, this);
                 m_infoPane.stopTime = System.currentTimeMillis();
                 System.out.println("Elapsed time was " + (m_infoPane.stopTime - m_infoPane.startTime) + " miliseconds.");
@@ -218,26 +211,41 @@ public class Main extends Application {
                 listOfButts.get(m_infoPane.moleSpot).addEventFilter(MouseEvent.MOUSE_CLICKED, this);
                 score++;
                 m_infoPane.updateScore(score);
+                //updates highscore
                 if (score > highScore) {
                     highScore = score;
                     m_HSPane.updateHighScore(score);
                     try {
-                        writeHighScore(score);   // writes highscore to file
+                        writeHighScore(score);   // writes high score to file
                     } catch (IOException ex) {
                         ex.printStackTrace();
                     }
                 }
                 m_infoPane.startTime = System.currentTimeMillis();
-                molePop.setCycleCount(Timeline.INDEFINITE);
-                molePop.play();
+
             }
 
         };
 
+        Timeline molePop = new Timeline(new KeyFrame(Duration.seconds(2), event -> {
+            clicked = false; // marks new mole as not clicked
+            listOfButts.get(m_infoPane.moleSpot).setVisible(false);
+            System.out.println("new mole");m_infoPane.moleSpot = rand.nextInt(100);
+            listOfButts.get(m_infoPane.moleSpot).setVisible(true);
+            listOfButts.get(m_infoPane.moleSpot).setGraphic(new ImageView(mole));
+            listOfButts.get(m_infoPane.moleSpot).addEventFilter(MouseEvent.MOUSE_CLICKED,eventHitMole);
+            // update miss if no click when moved
+            if(!clicked){
+                miss++;
+                m_infoPane.updateMiss(miss);
+            }
+
+        }));
+
 
         EventHandler<MouseEvent> eventResetScore = e -> {
+            listOfButts.get(m_infoPane.moleSpot).addEventFilter(MouseEvent.MOUSE_CLICKED,eventHitMole); // allows new moles to be clicked
             //clears all the hit moles
-            listOfButts.get(m_infoPane.moleSpot).addEventFilter(MouseEvent.MOUSE_CLICKED,eventHitMole);
             for (int i = 0; i < 100; i++) {
                 listOfButts.get(i).setVisible(false);
             }
@@ -257,6 +265,8 @@ public class Main extends Application {
 
         listOfButts.get(m_infoPane.moleSpot).addEventFilter(MouseEvent.MOUSE_CLICKED,eventHitMole);
         m_infoPane.m_reset.addEventFilter(MouseEvent.MOUSE_CLICKED,eventResetScore);
+        molePop.setCycleCount(Timeline.INDEFINITE);
+        molePop.play();
 
 
         gridPane.setAlignment(Pos.BOTTOM_CENTER);
